@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(to right, #f0f4f8, #d9e2ec);
+    }
+    button {
+      transition: all 0.3s ease-in-out;
+    }
+    input:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen font-sans">
+
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white py-4 shadow-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6">
+      <h1 class="text-2xl font-bold">Campus Portal Admin</h1>
+      <nav class="space-x-4">
+        <a href="{{ url_for('admin_dashboard') }}" class="hover:underline">Dashboard</a>
+        <a href="{{ url_for('view_users') }}" class="hover:underline">Users</a>
+        <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-white">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow flex items-center justify-center px-4 py-10">
+
+    <div class="bg-white shadow-2xl rounded-2xl w-full max-w-4xl p-10 space-y-10 border border-gray-200">
+
+      <!-- Welcome Section -->
+      <div class="text-center">
+        <h2 class="text-4xl font-extrabold text-indigo-700 mb-2">Admin Dashboard</h2>
+        <p class="text-md text-gray-500">Manage users, monitor dashboards, and review recent activities.</p>
+      </div>
+
+      <!-- User Management -->
+      <div class="flex justify-end">
+        <a href="{{ url_for('logout') }}">
+          <button class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-400">
+            🚪 Logout
+          </button>
+        </a>
+      </div>
+
+      <div>
+        <h3 class="text-2xl font-semibold text-gray-800 mb-3">👤 Manage Users</h3>
+        <div class="flex flex-wrap gap-4">
+          <a href="{{ url_for('signup') }}">
+            <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg shadow-md">➕ Add New User</button>
+          </a>
+          <a href="{{ url_for('view_users') }}">
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow-md">📋 View All Users</button>
+          </a>
+        </div>
+      </div>
+
+      <!-- Search Section -->
+      <!--<div>
+        <form action="{{ url_for('view_users') }}" method="GET" class="flex items-center space-x-4">
+          <input type="text" name="search" placeholder="🔍 Search by name or email"
+            class="p-3 border border-gray-300 rounded-lg w-full max-w-md bg-gray-50 focus:ring-2 focus:ring-blue-400">
+          <button type="submit"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-300">
+            Search
+          </button>
+        </form>
+      </div>-->
+
+    <!--- {% if searched_users %}
+  <div>
+    <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-3">🔍 Search Results</h3>
+    <ul class="space-y-4">
+      {% for user in searched_users %}
+        <li class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div>
+            <p class="font-semibold text-gray-800">{{ user.name }} ({{ user.role.capitalize() }})</p>
+            <p class="text-sm text-gray-500">{{ user.email }}</p>
+          </div>
+          <a href="{{ url_for('user_dashboard', user_id=user._id) }}">
+            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow">
+              👁 View Dashboard
+            </button>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}-->
+
+<form action="{{ url_for('search_student') }}" method="GET" class="flex items-center space-x-4">
+    <input type="text" name="query" placeholder="🔍 Search by name or email"
+           class="p-3 border border-gray-300 rounded-lg w-full max-w-md bg-gray-50 focus:ring-2 focus:ring-blue-400">
+    <button type="submit"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg shadow-md">Search</button>
+  </form>
+  
+
+      <!-- Dashboard Links -->
+      <!--<div>
+        <h3 class="text-2xl font-semibold text-gray-800 mb-3">📊 View Dashboards</h3>
+        <div class="flex flex-wrap gap-4">
+          <a href="{{ url_for('student_dashboard') }}">
+            <button class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-lg shadow-md">🎓 Student Dashboard</button>
+          </a>
+          <a href="{{ url_for('faculty_dashboard') }}">
+            <button class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg shadow-md">🧑‍🏫 Faculty Dashboard</button>
+          </a>
+          <a href="{{ url_for('staff_dashboard') }}">
+            <button class="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2 rounded-lg shadow-md">👨‍💼 Staff Dashboard</button>
+          </a>
+        </div>
+      </div>-->
+
+      <!-- Recent Activity -->
+      <div>
+        <h3 class="text-2xl font-semibold text-gray-800 mb-3">📌 Recent User Activity</h3>
+        <ul class="list-disc pl-6 space-y-1 text-gray-700 text-sm">
+          {% for activity in activities %}
+            <li class="hover:text-blue-600 transition">
+              {{ activity.user_name }} ({{ activity.role }}) - {{ activity.action }} at {{ activity.timestamp }}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-indigo-800 text-white py-4 mt-10 shadow-inner">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center px-6 space-y-2 md:space-y-0">
+      <p class="text-sm">© 2025 Campus Management System. All rights reserved.</p>
+      <div class="space-x-4 text-sm">
+        <a href="#" class="hover:underline">Privacy Policy</a>
+        <a href="#" class="hover:underline">Terms of Service</a>
+        <a href="#" class="hover:underline">Help</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

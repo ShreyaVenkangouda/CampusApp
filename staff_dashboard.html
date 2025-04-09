@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+  <header class="bg-white shadow-md py-4 px-6 flex justify-between items-center border-b border-gray-200">
+    <div class="text-xl font-bold text-blue-800">🎓 Campus App</div>
+  </header>
+  
+  <!-- Navbar -->
+  <nav class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
+    <h1 class="text-2xl font-bold">Staff Dashboard</h1>
+    <div class="space-x-6 text-sm md:text-base">
+      <a href="#events" class="hover:underline transition">Events</a>
+      <a href="#notifications" class="hover:underline transition">Notifications</a>
+      <a href="#resources" class="hover:underline transition">Resources</a>
+      <a href="{{ url_for('logout') }}" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="p-6 space-y-8 max-w-7xl mx-auto">
+
+    <!-- Welcome Section -->
+    <section class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-semibold mb-2">Welcome, {{ session['user']['name'] }}!</h2>
+      <p class="text-gray-600 text-sm md:text-base">Here you can manage college events, send notifications, and update resources.</p>
+    </section>
+
+    <!-- Events Section -->
+    <section id="events" class="bg-white p-6 rounded-lg shadow-md">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
+        <h2 class="text-2xl font-semibold">Upcoming Events</h2>
+        <div class="flex flex-col md:flex-row gap-2 md:items-center">
+          <input type="text" id="eventSearch" placeholder="Search Events" class="p-2 border border-gray-300 rounded w-full md:w-60" oninput="searchEvent()">
+          <button onclick="openEventModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">+ Create Event</button>
+        </div>
+      </div>
+      <ul id="eventList" class="list-disc list-inside text-gray-700 space-y-2 ml-4">
+        {% for event in events %}
+          <li><strong>{{ event['title'] }}</strong> - {{ event['date'] }} [{{ event['event_type'] }}]</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <!-- Notifications Section -->
+    <section id="notifications" class="bg-white p-6 rounded-lg shadow-md">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold">Send Notification</h2>
+        <button onclick="openNotificationModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">+ New Notification</button>
+      </div>
+      <p id="lastNotification" class="text-gray-600 text-sm md:text-base">
+        {% if notifications %}
+          Last notification sent: <strong>{{ notifications[0]['action'].replace('Sent Notification: ', '') }}</strong>
+        {% else %}
+          No notifications sent yet.
+        {% endif %}
+      </p>
+    </section>
+
+    <!-- Resources Section -->
+    <section id="resources" class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-semibold mb-6">Manage Resources</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-gray-100 p-4 rounded-lg shadow-sm">
+          <h3 class="font-medium mb-2">Projector Availability</h3>
+          <p id="projectorAvailability" class="text-green-600 font-bold mb-2">5 Available</p>
+          <button onclick="updateResource('projector')" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 transition">Update</button>
+        </div>
+        <div class="bg-gray-100 p-4 rounded-lg shadow-sm">
+          <h3 class="font-medium mb-2">Lab Computers</h3>
+          <p id="labComputers" class="text-yellow-600 font-bold mb-2">12 In Use / 18 Total</p>
+          <button onclick="updateResource('labComputers')" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 transition">Update</button>
+        </div>
+        <div class="bg-gray-100 p-4 rounded-lg shadow-sm">
+          <h3 class="font-medium mb-2">Transport</h3>
+          <p id="transport" class="text-blue-600 font-bold mb-2">Buses Assigned: 6</p>
+          <button onclick="updateResource('transport')" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 transition">Update</button>
+        </div>
+        <div class="bg-gray-100 p-4 rounded-lg shadow-sm">
+          <h3 class="font-medium mb-2">Classrooms Reserved</h3>
+          <p id="classroomsReserved" class="text-red-600 font-bold mb-2">4 Reserved Today</p>
+          <button onclick="updateResource('classroomsReserved')" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 transition">Update</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal for Event -->
+  <div id="eventModal" class="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-11/12 max-w-md shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">Create Event</h2>
+      <form method="POST" action="{{ url_for('create_event') }}">
+        <input type="text" name="title" placeholder="Event Title" class="w-full p-2 mb-4 border border-gray-300 rounded" required />
+        <input type="date" name="date" class="w-full p-2 mb-4 border border-gray-300 rounded" required />
+        <select name="event_type" class="w-full p-2 mb-4 border border-gray-300 rounded">
+          <option value="Workshop">Workshop</option>
+          <option value="Meeting">Meeting</option>
+          <option value="Social">Social</option>
+          <option value="Event">Event</option>
+        </select>
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Create Event</button>
+      </form>
+      <button onclick="closeEventModal()" class="mt-4 text-sm text-gray-500 hover:underline">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Modal for Notification -->
+  <div id="notificationModal" class="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-11/12 max-w-md shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">Send Notification</h2>
+      <form method="POST" action="{{ url_for('send_notification') }}">
+        <textarea name="notification_text" placeholder="Enter notification message" class="w-full p-2 mb-4 border border-gray-300 rounded resize-none" rows="4" required></textarea>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Send Notification</button>
+      </form>
+      <button onclick="closeNotificationModal()" class="mt-4 text-sm text-gray-500 hover:underline">Cancel</button>
+    </div>
+  </div>
+
+  <!-- JavaScript for Interactivity -->
+  <script>
+    function openEventModal() {
+      document.getElementById('eventModal').classList.remove('hidden');
+    }
+
+    function closeEventModal() {
+      document.getElementById('eventModal').classList.add('hidden');
+    }
+
+    function openNotificationModal() {
+      document.getElementById('notificationModal').classList.remove('hidden');
+    }
+
+    function closeNotificationModal() {
+      document.getElementById('notificationModal').classList.add('hidden');
+    }
+
+    function searchEvent() {
+      let searchValue = document.getElementById('eventSearch').value.toLowerCase();
+      let eventListItems = document.getElementById('eventList').getElementsByTagName('li');
+      
+      for (let i = 0; i < eventListItems.length; i++) {
+        let event = eventListItems[i].textContent.toLowerCase();
+        eventListItems[i].style.display = event.includes(searchValue) ? '' : 'none';
+      }
+    }
+  </script>
+
+<footer class="bg-blue-700 text-white py-4 mt-10 shadow-inner">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center px-6 space-y-2 md:space-y-0">
+    <p class="text-sm">© 2025 Campus Management System. All rights reserved.</p>
+    <div class="space-x-4 text-sm">
+      <a href="#" class="hover:underline">Privacy Policy</a>
+      <a href="#" class="hover:underline">Terms of Service</a>
+      <a href="#" class="hover:underline">Help</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+
+</html>

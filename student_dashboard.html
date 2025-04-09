@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: linear-gradient(to right, #f8fafc, #e2e8f0);
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+
+  <header class="bg-white shadow-md py-4 px-6 flex justify-between items-center border-b border-gray-200">
+    <div class="text-xl font-bold text-blue-800">🎓 Campus App</div>
+    <div class="text-sm text-gray-600">Empowering Students | Learn & Grow</div>
+  </header>
+
+  <!-- Navbar -->
+  <nav class="bg-blue-800 text-white p-4 flex flex-col md:flex-row justify-between items-center shadow-lg">
+    <h1 class="text-3xl font-bold mb-2 md:mb-0">📚 Student Dashboard</h1>
+    <div class="space-x-4 text-md">
+      <a href="#academics" class="hover:underline hover:text-blue-200 transition">Academics</a>
+      <a href="#attendance" class="hover:underline hover:text-blue-200 transition">Attendance</a>
+      <a href="#notifications" class="hover:underline hover:text-blue-200 transition">Notifications</a>
+      <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded-md text-white transition">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="p-6 max-w-6xl mx-auto space-y-8">
+
+    <!-- Welcome Section -->
+    <section class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-2xl font-semibold mb-2">Welcome, {{ session['user']['name'] }}! 👋</h2>
+      <p class="text-gray-600">This is your personalized dashboard. Monitor your performance, attendance, and academic journey here.</p>
+    </section>
+
+    <!-- Academics Section -->
+    <section id="academics" class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-2xl font-semibold mb-4 text-blue-700">📈 Academic Performance</h2>
+      {% if grades %}
+        <div class="max-w-3xl mx-auto">
+          <canvas id="gradesChart" class="w-full h-[300px]"></canvas>
+        </div>
+
+        <div class="mt-6 overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+            <thead>
+              <tr class="bg-blue-100 text-gray-800">
+                <th class="py-3 px-4 text-left">Subject</th>
+                <th class="py-3 px-4 text-left">Grade (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for subject, grade in grades.items() %}
+              <tr class="hover:bg-gray-50 transition">
+                <td class="py-2 px-4">{{ subject }}</td>
+                <td class="py-2 px-4 font-medium">{{ grade }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-gray-600">No grade data available.</p>
+      {% endif %}
+    </section>
+  
+    <!-- Attendance Section -->
+    <section id="attendance" class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-2xl font-semibold mb-4 text-blue-700">📊 Attendance Overview</h2>
+
+      <div id="attendanceLoader" class="flex justify-center items-center space-x-3 mb-6">
+        <svg class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+        </svg>
+        <span class="text-gray-600 font-medium">Loading Attendance...</span>
+      </div>
+
+      <div id="attendanceContent" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-blue-50 p-5 rounded-xl shadow-sm">
+          <h3 class="text-lg font-semibold mb-3 text-blue-800">Subjects</h3>
+          <ul class="list-disc list-inside text-gray-700 space-y-1" id="subjectsList">
+            <!-- Dynamic list -->
+          </ul>
+        </div>
+        <div class="p-5 bg-green-50 rounded-xl shadow-sm text-center">
+          <h3 class="text-lg font-semibold mb-3 text-green-800">Total Attendance</h3>
+          <p id="totalAttendance" class="text-4xl font-extrabold text-green-600">--%</p>
+          <p class="text-gray-600 mt-1">Keep up the good work!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notifications Section -->
+    <section id="notifications" class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-2xl font-semibold mb-4 text-blue-700">🔔 Notifications</h2>
+      <ul class="space-y-4">
+        <li class="bg-blue-50 p-4 rounded-md shadow-sm">📢 New grades posted for Physics.</li>
+        <li class="bg-blue-50 p-4 rounded-md shadow-sm">🧪 Upcoming exam for Chemistry on <strong>15th May</strong>.</li>
+        <li class="bg-blue-50 p-4 rounded-md shadow-sm">📝 Updated attendance policy for this semester.</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- Chart & Dynamic Data Script -->
+  <script>
+    const subjects = {{ subjects | tojson | safe }};
+    const attendance = {{ attendance | tojson | safe }};
+    const grades = {{ grades_values | tojson | safe }};
+
+    // Attendance Display Logic
+    const totalAttendance = (attendance.reduce((a, b) => a + b, 0) / attendance.length).toFixed(2);
+
+    document.getElementById('attendanceLoader').classList.add('hidden');
+    document.getElementById('attendanceContent').classList.remove('hidden');
+    document.getElementById('subjectsList').innerHTML = subjects
+      .map((subject, i) => `<li title="Your attendance in ${subject}">${subject}: <strong>${attendance[i]}%</strong></li>`)
+      .join('');
+    document.getElementById('totalAttendance').textContent = `${totalAttendance}%`;
+
+    // Grades Chart
+    const ctx = document.getElementById('gradesChart')?.getContext('2d');
+    if (ctx && grades.length > 0) {
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: subjects,
+          datasets: [{
+            label: 'Grades (%)',
+            data: grades,
+            backgroundColor: ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ec4899'],
+            borderRadius: 6,
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(tooltipItem) {
+                  return `${tooltipItem.label}: ${tooltipItem.raw}%`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+  <footer class="bg-indigo-800 text-white py-4 mt-10 shadow-inner">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center px-6 space-y-2 md:space-y-0">
+      <p class="text-sm">© 2025 Campus Management System. All rights reserved.</p>
+      <div class="space-x-4 text-sm">
+        <a href="#" class="hover:underline">Privacy Policy</a>
+        <a href="#" class="hover:underline">Terms of Service</a>
+        <a href="#" class="hover:underline">Help</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
